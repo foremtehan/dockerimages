@@ -1,0 +1,42 @@
+FROM phpswoole/swoole:php8.1-alpine
+
+ARG WWWUSER=1000
+ARG WWWGROUP=1000
+ARG USER=octane
+ARG TZ=UTC
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    TERM=xterm-color \
+    CONTAINER_MODE=${CONTAINER_MODE} \
+    APP_WITH_HORIZON=${APP_WITH_HORIZON} \
+    APP_WITH_SCHEDULER=${APP_WITH_SCHEDULER}
+
+ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.24/supercronic-linux-arm64 \
+    SUPERCRONIC=supercronic-linux-arm64 \
+    SUPERCRONIC_SHA1SUM=fce407a3d7d144120e97cfc0420f16a18f4637d9
+
+ENV ROOT=/var/www/html
+
+WORKDIR $ROOT
+
+SHELL ["/bin/sh", "-eou", "pipefail", "-c"]
+
+RUN apk update; \
+    apk add git curl wget python3 py3-pip postgresql14-client
+
+RUN pip install -Iv chardet==4.0.0
+
+RUN curl -fsSLO "$SUPERCRONIC_URL" \
+ && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
+ && chmod +x "$SUPERCRONIC" \
+ && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \
+ && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic \
+ && mkdir -p /etc/supercronic \
+ && echo "*/1 * * * * php ${ROOT}/artisan schedule:run --verbose --no-interaction" > /etc/supercronic/laravel
+
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
+
+RUN install-php-extensions gd zip bcmath pgsql pdo_pgsql
+
+COPY --from=myngx/cimp:arm64 /usr/local/bin/ /usr/local/bin/
+COPY --from=myngx/cimp:arm64 /usr/local/lib/ /usr/local/lib/
