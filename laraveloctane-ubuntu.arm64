@@ -85,9 +85,6 @@ RUN docker-php-ext-configure gd \
 
 RUN docker-php-ext-install zip bcmath pgsql pdo_pgsql
 
-RUN groupadd --force -g $WWWGROUP $USER \
-    && useradd -ms /bin/bash --no-log-init --no-user-group -g $WWWGROUP -u $WWWUSER $USER
-
 RUN apt-get clean \
     && docker-php-source delete \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
