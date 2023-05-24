@@ -1,10 +1,5 @@
 FROM phpswoole/swoole:php8.1-alpine
 
-ARG WWWUSER=1000
-ARG WWWGROUP=1000
-ARG USER=octane
-ARG TZ=UTC
-
 ENV DEBIAN_FRONTEND=noninteractive \
     TERM=xterm-color \
     CONTAINER_MODE=${CONTAINER_MODE} \
@@ -22,7 +17,7 @@ WORKDIR $ROOT
 SHELL ["/bin/sh", "-eou", "pipefail", "-c"]
 
 RUN apk update; \
-    apk add git curl wget python3 py3-pip postgresql14-client openssh-client
+    apk add git curl wget python3 py3-pip postgresql14-client openssh-client supervisor
 
 RUN pip install -Iv chardet==4.0.0
 
