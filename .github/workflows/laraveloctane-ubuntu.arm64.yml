@@ -30,4 +30,4 @@ jobs:
           file: "laraveloctane-ubuntu.arm64"
           platforms: linux/arm64
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/larvoct:ubuntu-${{ github.run_number }}, ${{ secrets.DOCKER_USERNAME }}/larvoct-ubuntu-alpine:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/larvoct:ubuntu-${{ github.run_number }}, ${{ secrets.DOCKER_USERNAME }}/larvoct-ubuntu:latest
