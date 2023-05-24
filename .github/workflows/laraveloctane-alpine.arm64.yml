@@ -3,7 +3,7 @@ name: Build Docker App Image and Push it to Docker Hub
 on:
   push:
     paths:
-      - laraveloctane-alpine.arm64.yml
+      - .github/workflows/laraveloctane-alpine.arm64.yml
       - laraveloctane-alpine.arm64
 jobs:
   build:
