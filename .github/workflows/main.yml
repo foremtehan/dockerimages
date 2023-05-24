@@ -27,4 +27,4 @@ jobs:
           file: "Dockerfile.arm64"
           platforms: linux/arm64
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/laraveloctane:${{ github.run_number }} , ${{ secrets.DOCKER_USERNAME }}/laraveloctane:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/laraveloctane:arm64-${{ github.run_number }}
