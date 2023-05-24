@@ -24,6 +24,7 @@ jobs:
       - name: Build and push app
         uses: docker/build-push-action@v4
         with:
+          file: "Dockerfile.arm64"
           platforms: linux/arm64
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/laraveloctane:${{ github.run_number }} , ${{ secrets.DOCKER_USERNAME }}/laraveloctane:latest
