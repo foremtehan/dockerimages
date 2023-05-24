@@ -22,7 +22,7 @@ WORKDIR $ROOT
 SHELL ["/bin/sh", "-eou", "pipefail", "-c"]
 
 RUN apk update; \
-    apk add git curl wget python3 py3-pip postgresql14-client
+    apk add git curl wget python3 py3-pip postgresql14-client openssh-client
 
 RUN pip install -Iv chardet==4.0.0
 
