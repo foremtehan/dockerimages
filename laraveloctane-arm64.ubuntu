@@ -1,0 +1,99 @@
+FROM composer:latest AS vendor
+WORKDIR /var/www/html
+COPY composer* .
+COPY auth.json .
+RUN composer install \
+  --no-dev \
+  --no-interaction \
+  --prefer-dist \
+  --ignore-platform-reqs \
+  --optimize-autoloader \
+  --apcu-autoloader \
+  --no-scripts
+
+FROM phpswoole/swoole:php8.1
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    TERM=xterm-color \
+    CONTAINER_MODE=${CONTAINER_MODE} \
+    APP_WITH_HORIZON=${APP_WITH_HORIZON} \
+    APP_WITH_SCHEDULER=${APP_WITH_SCHEDULER}
+
+ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.24/supercronic-linux-arm64 \
+    SUPERCRONIC=supercronic-linux-arm64 \
+    SUPERCRONIC_SHA1SUM=fce407a3d7d144120e97cfc0420f16a18f4637d9
+
+ENV ROOT=/var/www/html
+
+WORKDIR $ROOT
+
+SHELL ["/bin/bash", "-eou", "pipefail", "-c"]
+
+RUN apt-get update; \
+    apt-get install -yqq --no-install-recommends --show-progress \
+          apt-utils \
+          gnupg \
+          gosu \
+          git \
+          curl \
+          wget \
+          python3 \
+          python3-pip \
+          libcurl4-openssl-dev \
+          ca-certificates \
+          openssh-server \
+          supervisor \
+          libnss3 \
+          nss-plugin-pem \
+          libz-dev \
+          libxml2-dev \
+          libbrotli-dev \
+          libpq-dev \
+          libjpeg-dev \
+          libpng-dev \
+          libssl-dev \
+          libmcrypt-dev \
+          libonig-dev \
+          libzip-dev zip unzip \
+          libargon2-1 \
+          libidn2-0 \
+          libpcre2-8-0 \
+          libpcre3 \
+          libxml2 \
+          libzstd1 \
+          procps
+
+RUN apt update && apt install -yqq vim gpg gnupg2 software-properties-common apt-transport-https lsb-release
+RUN curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc|gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
+RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" |tee  /etc/apt/sources.list.d/pgdg.list
+RUN apt update && apt install -yqq postgresql-client-14
+
+RUN pip install -Iv chardet==4.0.0
+
+RUN curl -fsSLO "$SUPERCRONIC_URL" \
+ && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
+ && chmod +x "$SUPERCRONIC" \
+ && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \
+ && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic \
+ && mkdir -p /etc/supercronic \
+ && echo "*/1 * * * * php ${ROOT}/artisan schedule:run --verbose --no-interaction" > /etc/supercronic/laravel
+
+RUN docker-php-ext-configure gd \
+            --prefix=/usr \
+            --with-jpeg \
+    && docker-php-ext-install gd
+
+RUN docker-php-ext-install zip bcmath pgsql pdo_pgsql
+
+RUN groupadd --force -g $WWWGROUP $USER \
+    && useradd -ms /bin/bash --no-log-init --no-user-group -g $WWWGROUP -u $WWWUSER $USER
+
+RUN apt-get clean \
+    && docker-php-source delete \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && rm /var/log/lastlog /var/log/faillog
+
+COPY --from=jessejjohnson/curl-impersonate-chrome:latest /usr/local/bin/ /usr/local/bin/
+COPY --from=jessejjohnson/curl-impersonate-chrome:latest /usr/local/lib/ /usr/local/lib/
+
+RUN ldconfig
