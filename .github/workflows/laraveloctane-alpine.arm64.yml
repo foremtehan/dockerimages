@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - laraveloctane-alpine.arm64.yml
+      - laraveloctane-alpine.arm64
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,7 +27,7 @@ jobs:
       - name: Build and push app
         uses: docker/build-push-action@v4
         with:
-          file: "laraveloctane-alpine.arm64.yml"
+          file: "laraveloctane-alpine.arm64"
           platforms: linux/arm64
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/larvoct:arm64-${{ github.run_number }}
